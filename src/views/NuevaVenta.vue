@@ -1,0 +1,752 @@
+﻿<template>
+  <div class="nueva-venta-page">
+    <div class="page-header">
+      <h1 class="page-title">Nueva Factura</h1>
+      <router-link to="/ventas" class="btn btn-secondary">
+        Volver a Facturas
+      </router-link>
+    </div>
+
+    <!-- Cliente Selection Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Cliente</h3>
+      </div>
+      <div class="card-body">
+        <div class="selected-client-box" @click="showClienteModal = true">
+          <div v-if="!selectedCliente" class="placeholder-text">
+            <span>Click para seleccionar cliente (Opcional - Consumidor Final por defecto)</span>
+          </div>
+          <div v-else class="selected-info">
+            <div class="info-row">
+              <strong>{{ selectedCliente.nombre }}</strong>
+              <button @click.stop="clearCliente" class="btn-clear">×</button>
+            </div>
+            <div class="info-details">
+              <span>{{ selectedCliente.documento }}</span>
+              <span v-if="selectedCliente.telefono">• {{ selectedCliente.telefono }}</span>
+            </div>
+            <div v-if="selectedCliente.direccion" class="info-address">
+              {{ selectedCliente.direccion }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Productos Table -->
+    <div class="card mt-3">
+      <div class="card-header">
+        <h3 class="card-title">Productos en la Factura</h3>
+        <button @click="showProductoModal = true" class="btn btn-success">
+          Agregar Producto
+        </button>
+      </div>
+
+      <div v-if="detalles.length === 0" class="empty-state">
+        <p>No hay productos agregados. Click en "Agregar Producto" para comenzar.</p>
+      </div>
+
+      <div v-else>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th style="width: 120px;">Cantidad</th>
+                <th style="width: 140px;">Precio Unit.</th>
+                <th style="width: 120px;">Descuento (%)</th>
+                <th style="width: 140px;">Subtotal</th>
+                <th style="width: 100px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(detalle, index) in detalles" :key="index">
+                <td>
+                  <strong>{{ detalle.productoNombre }}</strong>
+                </td>
+                <td>
+                  <input 
+                    v-model.number="detalle.cantidad" 
+                    type="number" 
+                    class="form-control form-control-sm" 
+                    min="1"
+                    :max="getMaxStock(detalle.productoId)"
+                    @input="validateCantidad(detalle, index)"
+                  />
+                </td>
+                <td>{{ formatCurrency(detalle.precioUnitario) }}</td>
+                <td>
+                  <input 
+                    v-model.number="detalle.descuento" 
+                    type="number" 
+                    class="form-control form-control-sm" 
+                    min="0"
+                    max="100"
+                    step="0.1"
+                  />
+                </td>
+                <td><strong>{{ formatCurrency(calculateDetalleTotal(detalle)) }}</strong></td>
+                <td>
+                  <button 
+                    @click="removeProducto(index)" 
+                    class="btn btn-sm btn-danger"
+                    title="Eliminar"
+                  >
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Totales -->
+        <div class="totals-section">
+          <div class="totals-row">
+            <span>Subtotal:</span>
+            <strong>{{ formatCurrency(subtotal) }}</strong>
+          </div>
+          <div class="totals-row">
+            <span>IVA (12%):</span>
+            <strong>{{ formatCurrency(totalIVA) }}</strong>
+          </div>
+          <div class="totals-row total">
+            <span>TOTAL:</span>
+            <strong>{{ formatCurrency(total) }}</strong>
+          </div>
+        </div>
+
+        <!-- Observaciones -->
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Observaciones (Opcional)</label>
+            <textarea
+              v-model="observaciones"
+              class="form-control"
+              rows="3"
+              maxlength="500"
+              placeholder="Notas adicionales sobre la factura..."
+            ></textarea>
+          </div>
+
+          <div class="action-buttons">
+            <button @click="cancelVenta" class="btn btn-danger btn-lg">
+              Cancelar Factura
+            </button>
+            <button 
+              @click="guardarVenta" 
+              class="btn btn-primary btn-lg"
+              :disabled="saving || detalles.length === 0"
+            >
+              {{ saving ? 'Guardando...' : 'Guardar Factura' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Cliente -->
+    <Modal :show="showClienteModal" @close="showClienteModal = false" title="Seleccionar Cliente">
+      <div class="modal-search">
+        <SearchBox 
+          v-model="clienteSearchTerm" 
+          placeholder="Buscar por nombre o documento..."
+        />
+      </div>
+      <div class="modal-list">
+        <div 
+          v-for="cliente in filteredClientes" 
+          :key="cliente.id"
+          class="list-item"
+          @click="selectCliente(cliente)"
+        >
+          <div class="item-header">
+            <strong>{{ cliente.nombre }}</strong>
+            <span class="badge badge-info">{{ cliente.documento }}</span>
+          </div>
+          <div class="item-details">
+            <span v-if="cliente.telefono">Teléfono: {{ cliente.telefono }}</span>
+            <span v-if="cliente.email">Email: {{ cliente.email }}</span>
+          </div>
+        </div>
+        <div v-if="filteredClientes.length === 0" class="empty-message">
+          No se encontraron clientes
+        </div>
+      </div>
+    </Modal>
+
+    <!-- Modal Producto -->
+    <Modal :show="showProductoModal" @close="closeProductoModal" title="Agregar Producto">
+      <div class="modal-search">
+        <SearchBox 
+          v-model="productoSearchTerm" 
+          placeholder="Buscar por nombre o código de barras..."
+        />
+      </div>
+      <div class="modal-list">
+        <div 
+          v-for="producto in filteredProductos" 
+          :key="producto.id"
+          class="list-item"
+          :class="{ 'disabled': producto.stockActual === 0 || isProductoInCart(producto.id) }"
+          @click="selectProducto(producto)"
+        >
+          <div class="item-header">
+            <strong>{{ producto.nombre }}</strong>
+            <span class="badge badge-success">{{ formatCurrency(producto.precioVenta) }}</span>
+          </div>
+          <div class="item-details">
+            <span>Código: {{ producto.codigoBarra }}</span>
+            <span :class="{ 'text-danger': producto.stockActual < 10 }">
+              Stock: {{ producto.stockActual }}
+            </span>
+          </div>
+          <div v-if="isProductoInCart(producto.id)" class="item-warning">
+            Ya está en el carrito
+          </div>
+        </div>
+        <div v-if="filteredProductos.length === 0" class="empty-message">
+          No se encontraron productos disponibles
+        </div>
+      </div>
+
+      <div v-if="selectedTempProducto" class="producto-form">
+        <h4>{{ selectedTempProducto.nombre }}</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cantidad</label>
+            <input 
+              v-model.number="tempCantidad" 
+              type="number" 
+              class="form-control" 
+              min="1"
+              :max="selectedTempProducto.stockActual"
+            />
+            <small class="form-text">Disponible: {{ selectedTempProducto.stockActual }}</small>
+          </div>
+          <div class="form-group">
+            <label>Descuento (%)</label>
+            <input 
+              v-model.number="tempDescuento" 
+              type="number" 
+              class="form-control" 
+              min="0"
+              max="100"
+              step="0.1"
+            />
+          </div>
+        </div>
+        <div class="form-summary">
+          <p><strong>Precio Unitario:</strong> {{ formatCurrency(selectedTempProducto.precioVenta) }}</p>
+          <p><strong>Subtotal:</strong> {{ formatCurrency(calcularSubtotalTemp()) }}</p>
+        </div>
+        <button @click="agregarProductoAlCarrito" class="btn btn-primary btn-block">
+          Agregar al Carrito
+        </button>
+      </div>
+    </Modal>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useClienteStore } from '@/stores/clienteStore'
+import { useProductoStore } from '@/stores/productoStore'
+import { ventaService } from '@/services/ventaService'
+import { formatCurrency, calculateIVA } from '@/utils/helpers'
+import Modal from '@/components/Modal.vue'
+import SearchBox from '@/components/SearchBox.vue'
+import Swal from 'sweetalert2'
+
+const router = useRouter()
+const clienteStore = useClienteStore()
+const productoStore = useProductoStore()
+
+// Cliente selection
+const selectedCliente = ref(null)
+const showClienteModal = ref(false)
+const clienteSearchTerm = ref('')
+
+// Producto selection
+const showProductoModal = ref(false)
+const productoSearchTerm = ref('')
+const selectedTempProducto = ref(null)
+const tempCantidad = ref(1)
+const tempDescuento = ref(0)
+
+// Venta data
+const detalles = ref([])
+const observaciones = ref('')
+const saving = ref(false)
+
+// Computed
+const clientesActivos = computed(() => clienteStore.clientesActivos)
+const productosDisponibles = computed(() => productoStore.productosDisponibles)
+
+const filteredClientes = computed(() => {
+  if (!clienteSearchTerm.value) return clientesActivos.value
+  const term = clienteSearchTerm.value.toLowerCase()
+  return clientesActivos.value.filter(c => 
+    c.nombre.toLowerCase().includes(term) ||
+    c.documento.toLowerCase().includes(term)
+  )
+})
+
+const filteredProductos = computed(() => {
+  if (!productoSearchTerm.value) return productosDisponibles.value.filter(p => p.stockActual > 0)
+  const term = productoSearchTerm.value.toLowerCase()
+  return productosDisponibles.value.filter(p => 
+    p.stockActual > 0 && (
+      p.nombre.toLowerCase().includes(term) ||
+      p.codigoBarra.toLowerCase().includes(term)
+    )
+  )
+})
+
+const subtotal = computed(() => {
+  return detalles.value.reduce((sum, detalle) => sum + calculateDetalleTotal(detalle), 0)
+})
+
+const totalIVA = computed(() => calculateIVA(subtotal.value, 12))
+const total = computed(() => subtotal.value + totalIVA.value)
+
+// Methods
+const selectCliente = (cliente) => {
+  selectedCliente.value = cliente
+  showClienteModal.value = false
+  clienteSearchTerm.value = ''
+}
+
+const clearCliente = () => {
+  selectedCliente.value = null
+}
+
+const selectProducto = (producto) => {
+  if (producto.stockActual === 0 || isProductoInCart(producto.id)) return
+  selectedTempProducto.value = producto
+  tempCantidad.value = 1
+  tempDescuento.value = 0
+}
+
+const closeProductoModal = () => {
+  showProductoModal.value = false
+  selectedTempProducto.value = null
+  productoSearchTerm.value = ''
+  tempCantidad.value = 1
+  tempDescuento.value = 0
+}
+
+const isProductoInCart = (productoId) => {
+  return detalles.value.some(d => d.productoId === productoId)
+}
+
+const getMaxStock = (productoId) => {
+  const producto = productosDisponibles.value.find(p => p.id === productoId)
+  return producto?.stockActual || 1
+}
+
+const validateCantidad = (detalle, index) => {
+  const maxStock = getMaxStock(detalle.productoId)
+  if (detalle.cantidad > maxStock) {
+    detalle.cantidad = maxStock
+    Swal.fire({
+      icon: 'warning',
+      title: 'Stock Insuficiente',
+      text: `Solo hay ${maxStock} unidades disponibles`,
+      toast: true,
+      position: 'top-end',
+      timer: 3000,
+      showConfirmButton: false
+    })
+  }
+  if (detalle.cantidad < 1) {
+    detalle.cantidad = 1
+  }
+}
+
+const calcularSubtotalTemp = () => {
+  if (!selectedTempProducto.value) return 0
+  const subtotalItem = selectedTempProducto.value.precioVenta * tempCantidad.value
+  const descuentoAmount = (subtotalItem * tempDescuento.value) / 100
+  return subtotalItem - descuentoAmount
+}
+
+const agregarProductoAlCarrito = () => {
+  if (!selectedTempProducto.value || tempCantidad.value <= 0) return
+
+  if (tempCantidad.value > selectedTempProducto.value.stockActual) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Stock Insuficiente',
+      text: `Solo hay ${selectedTempProducto.value.stockActual} unidades disponibles`
+    })
+    return
+  }
+
+  detalles.value.push({
+    productoId: selectedTempProducto.value.id,
+    productoNombre: selectedTempProducto.value.nombre,
+    cantidad: tempCantidad.value,
+    precioUnitario: selectedTempProducto.value.precioVenta,
+    descuento: tempDescuento.value
+  })
+
+  Swal.fire({
+    icon: 'success',
+    title: 'Producto agregado',
+    toast: true,
+    position: 'top-end',
+    timer: 2000,
+    showConfirmButton: false
+  })
+
+  closeProductoModal()
+}
+
+const calculateDetalleTotal = (detalle) => {
+  const subtotalItem = detalle.cantidad * detalle.precioUnitario
+  const descuentoAmount = (subtotalItem * detalle.descuento) / 100
+  return subtotalItem - descuentoAmount
+}
+
+const removeProducto = (index) => {
+  detalles.value.splice(index, 1)
+}
+
+const guardarVenta = async () => {
+  if (detalles.value.length === 0) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Sin Productos',
+      text: 'Debe agregar al menos un producto a la factura'
+    })
+    return
+  }
+
+  const result = await Swal.fire({
+    title: '¿Confirmar Factura?',
+    html: `
+      <p><strong>Total a cobrar:</strong> ${formatCurrency(total.value)}</p>
+      <p>¿Deseas confirmar esta factura?</p>
+    `,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#FF7713',
+    cancelButtonColor: '#95a5a6',
+    confirmButtonText: 'Sí, confirmar',
+    cancelButtonText: 'Cancelar'
+  })
+
+  if (!result.isConfirmed) return
+
+  saving.value = true
+  try {
+    const ventaData = {
+      clienteId: selectedCliente.value?.id || null,
+      detalles: detalles.value.map(d => ({
+        productoId: d.productoId,
+        cantidad: d.cantidad,
+        precioUnitario: d.precioUnitario,
+        descuento: d.descuento
+      })),
+      observaciones: observaciones.value || null
+    }
+
+    await ventaService.create(ventaData)
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Factura Registrada',
+      html: `
+        <p>La factura se registró correctamente</p>
+        <p><strong>Total:</strong> ${formatCurrency(total.value)}</p>
+      `,
+      confirmButtonColor: '#FF7713'
+    })
+
+    router.push('/ventas')
+  } catch (error) {
+    console.error('Error al guardar venta:', error)
+    const message = error.response?.data?.message || error.message || 'Error al guardar la venta'
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: message
+    })
+  } finally {
+    saving.value = false
+  }
+}
+
+const cancelVenta = async () => {
+  const result = await Swal.fire({
+    title: '¿Cancelar Venta?',
+    text: 'Se perderán todos los datos ingresados',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#180A01',
+    cancelButtonColor: '#95a5a6',
+    confirmButtonText: 'Sí, cancelar',
+    cancelButtonText: 'No'
+  })
+
+  if (result.isConfirmed) {
+    router.push('/ventas')
+  }
+}
+
+onMounted(async () => {
+  try {
+    await Promise.all([
+      clienteStore.fetchClientes(),
+      productoStore.fetchProductos()
+    ])
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'No se pudieron cargar los datos necesarios'
+    })
+  }
+})
+</script>
+
+<style scoped>
+.nueva-venta-page {
+  max-width: 1400px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.page-title {
+  font-size: 32px;
+  color: var(--secondary-color);
+  margin: 0;
+}
+
+.selected-client-box {
+  padding: 20px;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+}
+
+.selected-client-box:hover {
+  border-color: var(--primary-color);
+  background-color: rgba(255, 119, 19, 0.05);
+}
+
+.placeholder-text {
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+  width: 100%;
+}
+
+.selected-info {
+  width: 100%;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.info-row strong {
+  font-size: 18px;
+  color: var(--secondary-color);
+}
+
+.btn-clear {
+  background: none;
+  border: none;
+  font-size: 32px;
+  color: #dc3545;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  line-height: 1;
+}
+
+.btn-clear:hover {
+  color: #c82333;
+}
+
+.info-details {
+  display: flex;
+  gap: 15px;
+  color: #6c757d;
+  margin-bottom: 5px;
+}
+
+.info-address {
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: #6c757d;
+  font-size: 16px;
+}
+
+.totals-section {
+  padding: 20px 25px;
+  background-color: #f8f9fa;
+  border-top: 2px solid var(--primary-color);
+}
+
+.totals-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.totals-row.total {
+  font-size: 24px;
+  color: var(--primary-color);
+  border-top: 2px solid var(--primary-color);
+  padding-top: 10px;
+  margin-top: 10px;
+  font-weight: 700;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.btn-lg {
+  padding: 15px 30px;
+  font-size: 18px;
+}
+
+.modal-search {
+  margin-bottom: 20px;
+}
+
+.modal-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.list-item {
+  padding: 15px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.list-item:hover:not(.disabled) {
+  border-color: var(--primary-color);
+  background-color: rgba(255, 119, 19, 0.05);
+}
+
+.list-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f8f9fa;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.item-details {
+  display: flex;
+  gap: 15px;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.item-warning {
+  margin-top: 8px;
+  padding: 5px 10px;
+  background-color: #fff3cd;
+  color: #856404;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.empty-message {
+  padding: 40px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.producto-form {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.producto-form h4 {
+  margin-bottom: 15px;
+  color: var(--secondary-color);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-summary {
+  padding: 15px;
+  background-color: white;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.form-summary p {
+  margin: 5px 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.table input.form-control-sm {
+  text-align: center;
+  padding: 4px 8px;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

@@ -1,0 +1,28 @@
+{
+  "name": "punto-venta-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
+  },
+  "dependencies": {
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0",
+    "pinia": "^2.1.7",
+    "axios": "^1.6.7",
+    "vee-validate": "^4.12.5",
+    "yup": "^1.4.0",
+    "sweetalert2": "^11.10.7",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "vite": "^5.1.6",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.22.0"
+  }
+}
