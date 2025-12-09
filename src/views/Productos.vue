@@ -98,31 +98,11 @@
         </table>
       </div>
 
-      <!-- Pagination -->
-      <div class="pagination" v-if="totalPages > 1">
-        <button 
-          @click="currentPage--" 
-          :disabled="currentPage === 1"
-          class="btn btn-sm"
-        >
-          Anterior
-        </button>
-        <button 
-          v-for="page in totalPages" 
-          :key="page"
-          @click="currentPage = page"
-          :class="['btn', 'btn-sm', { active: currentPage === page }]"
-        >
-          {{ page }}
-        </button>
-        <button 
-          @click="currentPage++" 
-          :disabled="currentPage === totalPages"
-          class="btn btn-sm"
-        >
-          Siguiente
-        </button>
-      </div>
+      <!-- Advanced Pagination -->
+      <AdvancedPagination 
+        v-model:currentPage="currentPage" 
+        :totalPages="totalPages"
+      />
     </div>
 
     <!-- Modal Create/Edit -->
@@ -270,6 +250,7 @@ import { useAuthStore } from '@/stores/authStore'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import SearchBox from '@/components/SearchBox.vue'
 import Modal from '@/components/Modal.vue'
+import AdvancedPagination from '@/components/AdvancedPagination.vue'
 import { formatCurrency } from '@/utils/helpers'
 import { schemas } from '@/utils/validation'
 import Swal from 'sweetalert2'

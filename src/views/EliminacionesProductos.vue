@@ -125,26 +125,11 @@
         </table>
       </div>
 
-      <!-- Pagination -->
-      <div class="pagination" v-if="totalPages > 1">
-        <button 
-          @click="currentPage--" 
-          :disabled="currentPage === 1"
-          class="btn btn-sm"
-        >
-          Anterior
-        </button>
-        <span class="pagination-info">
-          Página {{ currentPage }} de {{ totalPages }}
-        </span>
-        <button 
-          @click="currentPage++" 
-          :disabled="currentPage === totalPages"
-          class="btn btn-sm"
-        >
-          Siguiente
-        </button>
-      </div>
+      <!-- Advanced Pagination -->
+      <AdvancedPagination 
+        v-model:currentPage="currentPage" 
+        :totalPages="totalPages"
+      />
     </div>
 
     <!-- Modal Detalles -->
@@ -226,6 +211,7 @@ import { eliminacionProductoService } from '@/services/eliminacionProductoServic
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import SearchBox from '@/components/SearchBox.vue'
 import Modal from '@/components/Modal.vue'
+import AdvancedPagination from '@/components/AdvancedPagination.vue'
 import { formatDateTime, formatCurrency } from '@/utils/helpers'
 import Swal from 'sweetalert2'
 

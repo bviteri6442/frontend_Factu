@@ -4,19 +4,19 @@ import { API_ENDPOINTS } from '@/config/api'
 export const productoService = {
   async getAll() {
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTOS)
-    // Mapear los datos del backend al formato del frontend
+    // Mapear los datos del backend (PascalCase) al formato del frontend (camelCase)
     return response.data.map(p => ({
-      id: p.id,
-      nombre: p.nombre,
-      codigoBarra: p.codigo,
-      descripcion: p.descripcion,
-      precioCosto: p.precioCompra,
-      precioVenta: p.precio,
-      stockActual: p.stock,
-      stockMinimo: p.stockMinimo,
-      activo: p.activo,
-      fechaCreacion: p.fechaCreacion,
-      fechaActualizacion: p.fechaActualizacion
+      id: p.Id || p.id,
+      nombre: p.Nombre || p.nombre,
+      codigoBarra: p.Codigo || p.codigo,
+      descripcion: p.Descripcion || p.descripcion,
+      precioCosto: p.PrecioCompra || p.precioCompra,
+      precioVenta: p.Precio || p.precio,
+      stockActual: p.Stock || p.stock,
+      stockMinimo: p.StockMinimo || p.stockMinimo,
+      activo: p.Activo || p.activo,
+      fechaCreacion: p.FechaCreacion || p.fechaCreacion,
+      fechaActualizacion: p.FechaActualizacion || p.fechaActualizacion
     }))
   },
   
@@ -70,14 +70,30 @@ export const productoService = {
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTOS)
     const searchTerm = query.toLowerCase()
     
-    // Filtrar productos por nombre, código o descripción
+    // Filtrar productos activos por nombre, código o descripción
+    // El backend retorna campos en PascalCase (Nombre, Codigo, etc.)
     const filtered = response.data.filter(p => 
-      p.nombre?.toLowerCase().includes(searchTerm) ||
-      p.codigo?.toLowerCase().includes(searchTerm) ||
-      p.descripcion?.toLowerCase().includes(searchTerm)
+      (p.Activo || p.activo) && (
+        p.Nombre?.toLowerCase().includes(searchTerm) ||
+        p.Codigo?.toLowerCase().includes(searchTerm) ||
+        p.Descripcion?.toLowerCase().includes(searchTerm) ||
+        p.nombre?.toLowerCase().includes(searchTerm) ||
+        p.codigo?.toLowerCase().includes(searchTerm) ||
+        p.descripcion?.toLowerCase().includes(searchTerm)
+      )
     )
     
-    // Limitar resultados
-    return filtered.slice(0, limit)
+    // Mapear al formato esperado por el frontend (camelCase) y limitar resultados
+    return filtered.slice(0, limit).map(p => ({
+      id: p.Id || p.id,
+      nombre: p.Nombre || p.nombre,
+      codigo: p.Codigo || p.codigo,
+      descripcion: p.Descripcion || p.descripcion,
+      precio: p.Precio || p.precio,
+      precioCompra: p.PrecioCompra || p.precioCompra,
+      stock: p.Stock || p.stock,
+      stockMinimo: p.StockMinimo || p.stockMinimo,
+      activo: p.Activo || p.activo
+    }))
   }
 }

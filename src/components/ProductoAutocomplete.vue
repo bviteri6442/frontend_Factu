@@ -50,7 +50,7 @@
             <span class="badge badge-primary">{{ producto.codigo }}</span>
           </div>
           <div class="item-details">
-            <span class="precio">💰 ${{ producto.precioVenta.toFixed(2) }}</span>
+            <span class="precio">💰 ${{ (producto.precio || producto.precioVenta || 0).toFixed(2) }}</span>
             <span :class="['stock', producto.stock <= 0 ? 'stock-agotado' : producto.stock <= 5 ? 'stock-bajo' : 'stock-normal']">
               📦 Stock: {{ producto.stock }}
             </span>

@@ -281,12 +281,17 @@ const isProductoInCart = (productoId) => {
 }
 
 const getMaxStock = (productoId) => {
-  const producto = productosDisponibles.value.find(p => p.id === productoId)
-  return producto?.stockActual || 1
+  // Buscar el producto en el carrito para obtener su stock original
+  const detalleExistente = detalles.value.find(d => d.productoId === productoId)
+  if (detalleExistente && detalleExistente.stockOriginal) {
+    return detalleExistente.stockOriginal
+  }
+  // Si no está en el carrito, permitir al menos 1
+  return 999999
 }
 
 const validateCantidad = (detalle, index) => {
-  const maxStock = getMaxStock(detalle.productoId)
+  const maxStock = detalle.stockOriginal || 999999
   if (detalle.cantidad > maxStock) {
     detalle.cantidad = maxStock
     Swal.fire({
@@ -333,7 +338,8 @@ const agregarProductoAlCarrito = () => {
     productoNombre: selectedTempProducto.value.nombre,
     cantidad: tempCantidad.value,
     precioUnitario: precioVenta,
-    descuento: tempDescuento.value
+    descuento: tempDescuento.value,
+    stockOriginal: stockDisponible  // Guardar el stock original para validaciones
   })
 
   Swal.fire({
