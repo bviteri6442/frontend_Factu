@@ -3,38 +3,58 @@
     <div class="page-header">
       <h1 class="page-title">Historial de Eliminaciones de Productos</h1>
       <button @click="generarPDF" class="btn btn-primary" :disabled="generandoPDF">
-        {{ generandoPDF ? 'Generando...' : '📄 Generar PDF' }}
+        <i class="fas fa-file-pdf"></i>
+        {{ generandoPDF ? 'Generando...' : 'Generar PDF' }}
       </button>
     </div>
 
     <!-- Estadísticas -->
-    <div class="stats-container" v-if="estadisticas">
-      <div class="stat-card">
-        <div class="stat-icon">📦</div>
-        <div class="stat-info">
-          <span class="stat-value">{{ estadisticas.totalEliminaciones }}</span>
-          <span class="stat-label">Total Eliminados</span>
+    <div class="stats-grid" v-if="estadisticas">
+      <div class="stat-card clientes">
+        <div class="stat-card-content">
+          <div class="stat-info">
+            <h3>{{ estadisticas.totalEliminaciones }}</h3>
+            <p>Total Eliminados</p>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-box-archive"></i>
+          </div>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">📅</div>
-        <div class="stat-info">
-          <span class="stat-value">{{ estadisticas.eliminacionesHoy }}</span>
-          <span class="stat-label">Hoy</span>
+      
+      <div class="stat-card productos">
+        <div class="stat-card-content">
+          <div class="stat-info">
+            <h3>{{ estadisticas.eliminacionesHoy }}</h3>
+            <p>Hoy</p>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-calendar-day"></i>
+          </div>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">📊</div>
-        <div class="stat-info">
-          <span class="stat-value">{{ estadisticas.stockTotalEliminado }}</span>
-          <span class="stat-label">Stock Eliminado</span>
+      
+      <div class="stat-card ventas">
+        <div class="stat-card-content">
+          <div class="stat-info">
+            <h3>{{ estadisticas.stockTotalEliminado }}</h3>
+            <p>Stock Eliminado</p>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-boxes-stacked"></i>
+          </div>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">💰</div>
-        <div class="stat-info">
-          <span class="stat-value">{{ formatCurrency(estadisticas.valorTotalEliminado || 0) }}</span>
-          <span class="stat-label">Valor Total</span>
+      
+      <div class="stat-card stock-bajo">
+        <div class="stat-card-content">
+          <div class="stat-info">
+            <h3>{{ formatCurrency(estadisticas.valorTotalEliminado || 0) }}</h3>
+            <p>Valor Total</p>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-dollar-sign"></i>
+          </div>
         </div>
       </div>
     </div>
@@ -96,7 +116,8 @@
                   class="btn btn-sm btn-info"
                   title="Ver detalles"
                 >
-                  👁️ Ver
+                  <i class="fas fa-eye"></i>
+                  Ver
                 </button>
               </td>
             </tr>
@@ -213,7 +234,7 @@ const generandoPDF = ref(false)
 const showModal = ref(false)
 const searchTerm = ref('')
 const currentPage = ref(1)
-const itemsPerPage = 2
+const itemsPerPage = 10
 
 const eliminaciones = ref([])
 const estadisticas = ref(null)
@@ -337,56 +358,6 @@ onMounted(async () => {
 <style scoped>
 .eliminaciones-page {
   max-width: 1400px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-}
-
-.page-title {
-  font-size: 28px;
-  color: #2c3e50;
-  margin: 0;
-}
-
-.stats-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.stat-icon {
-  font-size: 2.5rem;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-value {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  color: #7f8c8d;
 }
 
 .pagination {

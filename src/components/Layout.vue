@@ -1,60 +1,86 @@
 <template>
   <div class="layout">
     <nav class="navbar">
-      <div class="navbar-brand">
-        <h2>💼 Sistema de Gestión</h2>
-      </div>
-      <div class="navbar-user">
-        <span class="user-name">👤 {{ userName }}</span>
-        <span class="user-role">{{ userRole }}</span>
-        <button @click="handleLogout" class="btn btn-danger btn-sm">
-          Cerrar Sesión
-        </button>
+      <div class="navbar-content">
+        <div class="navbar-brand">
+          <i class="fas fa-briefcase"></i>
+          Sistema de Gestión
+        </div>
+        <div class="navbar-user">
+          <div class="navbar-user-info">
+            <div class="navbar-user-name">{{ userName }}</div>
+            <div class="navbar-user-role">{{ userRole }}</div>
+          </div>
+          <button @click="handleLogout" class="btn btn-danger btn-sm">
+            <i class="fas fa-right-from-bracket"></i>
+            Cerrar Sesión
+          </button>
+        </div>
       </div>
     </nav>
 
     <div class="layout-container">
       <aside class="sidebar">
         <nav class="sidebar-nav">
-          <router-link to="/dashboard" class="nav-item">
-            <span class="nav-icon">📊</span>
-            <span>Dashboard</span>
-          </router-link>
+          <div class="sidebar-item">
+            <router-link to="/dashboard" class="sidebar-link">
+              <i class="fas fa-chart-line"></i>
+              <span>Dashboard</span>
+            </router-link>
+          </div>
           
-          <router-link to="/clientes" class="nav-item">
-            <span class="nav-icon">👥</span>
-            <span>Clientes</span>
-          </router-link>
+          <div class="sidebar-item">
+            <router-link to="/clientes" class="sidebar-link">
+              <i class="fas fa-users"></i>
+              <span>Clientes</span>
+            </router-link>
+          </div>
           
-          <router-link to="/productos" class="nav-item">
-            <span class="nav-icon">📦</span>
-            <span>Productos</span>
-          </router-link>
+          <div class="sidebar-item">
+            <router-link to="/productos" class="sidebar-link">
+              <i class="fas fa-box"></i>
+              <span>Productos</span>
+            </router-link>
+          </div>
           
-          <router-link to="/ventas" class="nav-item">
-            <span class="nav-icon">💰</span>
-            <span>Facturas</span>
-          </router-link>
+          <div class="sidebar-item">
+            <router-link to="/ventas" class="sidebar-link">
+              <i class="fas fa-file-invoice-dollar"></i>
+              <span>Facturas</span>
+            </router-link>
+          </div>
           
-          <router-link v-if="isAdmin" to="/usuarios" class="nav-item">
-            <span class="nav-icon">👤</span>
-            <span>Usuarios</span>
-          </router-link>
+          <div v-if="isAdmin" class="sidebar-divider"></div>
           
-          <router-link v-if="isAdmin" to="/eliminaciones-usuarios" class="nav-item">
-            <span class="nav-icon">👤</span>
-            <span>Elim. Usuarios</span>
-          </router-link>
+          <div v-if="isAdmin" class="sidebar-item">
+            <router-link to="/usuarios" class="sidebar-link">
+              <i class="fas fa-user-shield"></i>
+              <span>Usuarios</span>
+            </router-link>
+          </div>
           
-          <router-link v-if="isAdmin" to="/eliminaciones-productos" class="nav-item">
-            <span class="nav-icon">📦</span>
-            <span>Elim. Productos</span>
-          </router-link>
+          <div v-if="isAdmin" class="sidebar-item">
+            <router-link to="/eliminaciones-usuarios" class="sidebar-link">
+              <i class="fas fa-user-slash"></i>
+              <span>Elim. Usuarios</span>
+            </router-link>
+          </div>
           
-          <router-link v-if="isAdmin" to="/logs" class="nav-item">
-            <span class="nav-icon">📋</span>
-            <span>Logs</span>
-          </router-link>
+          <div v-if="isAdmin" class="sidebar-item">
+            <router-link to="/eliminaciones-productos" class="sidebar-link">
+              <i class="fas fa-box-archive"></i>
+              <span>Elim. Productos</span>
+            </router-link>
+          </div>
+          
+          <div v-if="isAdmin" class="sidebar-divider"></div>
+          
+          <div v-if="isAdmin" class="sidebar-item">
+            <router-link to="/logs" class="sidebar-link">
+              <i class="fas fa-clipboard-list"></i>
+              <span>Logs</span>
+            </router-link>
+          </div>
         </nav>
       </aside>
 
@@ -104,107 +130,10 @@ const handleLogout = async () => {
   flex-direction: column;
 }
 
-.navbar {
-  background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
-  color: white;
-  padding: 0 30px;
-  height: 70px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.navbar-brand h2 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.navbar-user {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.user-name {
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.user-role {
-  background-color: rgba(255, 255, 255, 0.2);
-  padding: 5px 15px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
 .layout-container {
   display: flex;
   flex: 1;
 }
 
-.sidebar {
-  width: 250px;
-  background-color: white;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  padding: 20px 0;
-}
-
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-}
-
-.nav-item {
-  padding: 15px 25px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--secondary-color);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border-left: 3px solid transparent;
-}
-
-.nav-item:hover {
-  background-color: #F1F5F9;
-  border-left-color: #6366F1;
-}
-
-.nav-item.router-link-active {
-  background-color: rgba(99, 102, 241, 0.1);
-  border-left-color: #6366F1;
-  color: #6366F1;
-}
-
-.nav-icon {
-  font-size: 20px;
-}
-
-.main-content {
-  flex: 1;
-  padding: 30px;
-  background-color: #f5f5f5;
-  overflow-y: auto;
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    width: 200px;
-  }
-
-  .navbar-brand h2 {
-    font-size: 18px;
-  }
-
-  .main-content {
-    padding: 15px;
-  }
-}
+/* Los estilos de navbar, sidebar, etc. ya están en main.css */
 </style>

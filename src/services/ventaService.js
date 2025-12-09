@@ -13,6 +13,11 @@ export const ventaService = {
     const response = await apiClient.get(API_ENDPOINTS.VENTAS_BY_ID(id))
     return response.data
   },
+
+  async getVentasMesActual() {
+    const response = await apiClient.get(`${API_ENDPOINTS.VENTAS}/mes-actual`)
+    return response.data
+  },
   
   async create(ventaData) {
     const response = await apiClient.post(API_ENDPOINTS.VENTAS, ventaData)

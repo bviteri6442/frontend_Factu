@@ -129,7 +129,7 @@ import Swal from 'sweetalert2'
 const loading = ref(false)
 const searchTerm = ref('')
 const currentPage = ref(1)
-const itemsPerPage = 15
+const itemsPerPage = 10
 const showDetailModal = ref(false)
 const selectedError = ref(null)
 

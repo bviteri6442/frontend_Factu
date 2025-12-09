@@ -379,6 +379,13 @@ onMounted(() => {
 .action-buttons {
   display: flex;
   gap: 5px;
+  position: relative;
+  z-index: 1;
+}
+
+.action-buttons .btn {
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .venta-detail .detail-header {

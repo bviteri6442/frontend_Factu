@@ -64,5 +64,20 @@ export const productoService = {
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTOS)
     // Filter products with stock > 0
     return response.data.filter(p => p.stockActual > 0 && p.activo)
+  },
+
+  async search(query, limit = 20) {
+    const response = await apiClient.get(API_ENDPOINTS.PRODUCTOS)
+    const searchTerm = query.toLowerCase()
+    
+    // Filtrar productos por nombre, código o descripción
+    const filtered = response.data.filter(p => 
+      p.nombre?.toLowerCase().includes(searchTerm) ||
+      p.codigo?.toLowerCase().includes(searchTerm) ||
+      p.descripcion?.toLowerCase().includes(searchTerm)
+    )
+    
+    // Limitar resultados
+    return filtered.slice(0, limit)
   }
 }

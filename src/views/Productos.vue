@@ -279,7 +279,7 @@ const searchTerm = ref('')
 const filterStockBajo = ref(false)
 const filterSinStock = ref(false)
 const currentPage = ref(1)
-const itemsPerPage = 2
+const itemsPerPage = 10
 
 const form = ref({
   nombre: '',

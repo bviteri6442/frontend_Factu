@@ -1,59 +1,103 @@
 <template>
   <div class="dashboard">
-    <h1 class="page-title">Dashboard</h1>
-    
-    <div class="stats-grid">
-      <div class="stat-card" style="border-left: 4px solid var(--primary-color);">
-        <div class="stat-content">
-          <h3>{{ stats.totalClientes }}</h3>
-          <p>Total Clientes</p>
+    <div class="page-header">
+      <h1 class="page-title">
+        <i class="fas fa-chart-line"></i>
+        Dashboard
+      </h1>
+    </div>
+
+    <LoadingSpinner :show="loading" message="Cargando estadísticas..." />
+
+    <div v-if="!loading" class="stats-grid">
+      <!-- Total Clientes -->
+      <div class="stat-card clientes">
+        <div class="stat-card-content">
+          <div class="stat-info">
+            <h3>{{ stats.totalClientes }}</h3>
+            <p>Total Clientes</p>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-users"></i>
+          </div>
         </div>
       </div>
 
-      <div class="stat-card" style="border-left: 4px solid #50c878;">
-        <div class="stat-content">
-          <h3>{{ stats.totalProductos }}</h3>
-          <p>Total Productos</p>
+      <!-- Total Productos -->
+      <div class="stat-card productos">
+        <div class="stat-card-content">
+          <div class="stat-info">
+            <h3>{{ stats.totalProductos }}</h3>
+            <p>Total Productos</p>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-boxes-stacked"></i>
+          </div>
         </div>
       </div>
 
-      <div class="stat-card" style="border-left: 4px solid #f39c12;">
-        <div class="stat-content">
-          <h3>{{ stats.totalVentas }}</h3>
-          <p>Ventas del Mes</p>
+      <!-- Ventas del Mes -->
+      <div class="stat-card ventas">
+        <div class="stat-card-content">
+          <div class="stat-info">
+            <h3>{{ stats.totalVentas }}</h3>
+            <p>Ventas del Mes</p>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-receipt"></i>
+          </div>
         </div>
       </div>
 
-      <div class="stat-card" style="border-left: 4px solid var(--secondary-color);">
-        <div class="stat-content">
-          <h3>{{ stats.productosStockBajo }}</h3>
-          <p>Productos Stock Bajo</p>
+      <!-- Stock Bajo -->
+      <div class="stat-card stock-bajo">
+        <div class="stat-card-content">
+          <div class="stat-info">
+            <h3>{{ stats.productosStockBajo }}</h3>
+            <p>Productos Stock Bajo</p>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-triangle-exclamation"></i>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="row mt-3">
+    <!-- Bienvenida y Accesos Rápidos -->
+    <div class="row" v-if="!loading">
       <div class="col">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Bienvenido al Sistema</h3>
+            <h3 class="card-title">
+              <i class="fas fa-hand-wave"></i>
+              Bienvenido al Sistema
+            </h3>
           </div>
           <div class="card-body">
-            <p><strong>Usuario:</strong> {{ userName }}</p>
-            <p><strong>Rol:</strong> {{ userRole }}</p>
-            <p><strong>Fecha:</strong> {{ currentDate }}</p>
+            <div class="info-section">
+              <p><i class="fas fa-user"></i> <strong>Usuario:</strong> {{ userName }}</p>
+              <p><i class="fas fa-user-shield"></i> <strong>Rol:</strong> {{ userRole }}</p>
+              <p><i class="fas fa-calendar-day"></i> <strong>Fecha:</strong> {{ currentDate }}</p>
+            </div>
             
-            <div class="mt-2">
-              <h4>Accesos Rápidos</h4>
+            <div class="quick-actions-section">
+              <h4><i class="fas fa-bolt"></i> Accesos Rápidos</h4>
               <div class="quick-actions">
                 <router-link to="/ventas/nueva" class="btn btn-primary">
+                  <i class="fas fa-plus"></i>
                   Nueva Venta
                 </router-link>
                 <router-link to="/clientes" class="btn btn-success">
+                  <i class="fas fa-users"></i>
                   Ver Clientes
                 </router-link>
                 <router-link to="/productos" class="btn btn-warning">
+                  <i class="fas fa-box"></i>
                   Ver Productos
+                </router-link>
+                <router-link to="/ventas" class="btn btn-secondary">
+                  <i class="fas fa-file-invoice-dollar"></i>
+                  Ver Facturas
                 </router-link>
               </div>
             </div>
@@ -69,10 +113,14 @@ import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useClienteStore } from '@/stores/clienteStore'
 import { useProductoStore } from '@/stores/productoStore'
+import { ventaService } from '@/services/ventaService'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const authStore = useAuthStore()
 const clienteStore = useClienteStore()
 const productoStore = useProductoStore()
+
+const loading = ref(true)
 
 const userName = computed(() => authStore.userName)
 const userRole = computed(() => authStore.userRole)
@@ -95,9 +143,16 @@ const stats = ref({
 
 onMounted(async () => {
   try {
-    await clienteStore.fetchClientes()
-    await productoStore.fetchProductos()
+    loading.value = true
+    
+    // Cargar datos en paralelo
+    await Promise.all([
+      clienteStore.fetchClientes(),
+      productoStore.fetchProductos(),
+      loadVentasMes()
+    ])
 
+    // Actualizar estadísticas
     stats.value.totalClientes = clienteStore.clientesActivos.length
     stats.value.totalProductos = productoStore.productosActivos.length
     stats.value.productosStockBajo = productoStore.productos.filter(
@@ -105,84 +160,54 @@ onMounted(async () => {
     ).length
   } catch (error) {
     console.error('Error loading dashboard data:', error)
+  } finally {
+    loading.value = false
   }
 })
+
+async function loadVentasMes() {
+  try {
+    const ventasMes = await ventaService.getVentasMesActual()
+    stats.value.totalVentas = ventasMes
+  } catch (error) {
+    console.error('Error loading ventas del mes:', error)
+    stats.value.totalVentas = 0
+  }
+}
 </script>
 
 <style scoped>
 .dashboard {
   max-width: 1400px;
+  margin: 0 auto;
 }
 
-.page-title {
-  font-size: 32px;
-  color: var(--secondary-color);
-  margin-bottom: 30px;
+.info-section {
+  margin-bottom: 2rem;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 10px;
-  padding: 25px;
+.info-section p {
   display: flex;
   align-items: center;
-  gap: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+  font-size: 1rem;
 }
 
-.stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+.info-section p i {
+  color: var(--color-accion);
+  width: 1.25rem;
 }
 
-.stat-icon {
-  font-size: 48px;
-}
-
-.stat-content h3 {
-  font-size: 36px;
-  font-weight: 700;
-  margin: 0;
-  color: #2c3e50;
-}
-
-.stat-content p {
-  margin: 5px 0 0 0;
-  color: #7f8c8d;
-  font-size: 14px;
-}
-
-.card-body p {
-  margin: 10px 0;
-  font-size: 16px;
-}
-
-.quick-actions {
+.quick-actions-section h4 {
   display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-  margin-top: 15px;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: var(--color-marca);
 }
 
-@media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .quick-actions {
-    flex-direction: column;
-  }
-
-  .quick-actions .btn {
-    width: 100%;
-  }
+.quick-actions-section h4 i {
+  color: var(--color-alerta);
 }
 </style>

@@ -155,39 +155,11 @@
     </div>
 
     <!-- Modal Producto -->
-    <Modal :show="showProductoModal" @close="closeProductoModal" title="Agregar Producto">
-      <div class="modal-search">
-        <SearchBox 
-          v-model="productoSearchTerm" 
-          placeholder="Buscar por nombre o código de barras..."
-        />
-      </div>
-      <div class="modal-list">
-        <div 
-          v-for="producto in filteredProductos" 
-          :key="producto.id"
-          class="list-item"
-          :class="{ 'disabled': producto.stockActual === 0 || isProductoInCart(producto.id) }"
-          @click="selectProducto(producto)"
-        >
-          <div class="item-header">
-            <strong>{{ producto.nombre }}</strong>
-            <span class="badge badge-success">{{ formatCurrency(producto.precioVenta) }}</span>
-          </div>
-          <div class="item-details">
-            <span>Código: {{ producto.codigoBarra }}</span>
-            <span :class="{ 'text-danger': producto.stockActual < 10 }">
-              Stock: {{ producto.stockActual }}
-            </span>
-          </div>
-          <div v-if="isProductoInCart(producto.id)" class="item-warning">
-            Ya está en el carrito
-          </div>
-        </div>
-        <div v-if="filteredProductos.length === 0" class="empty-message">
-          No se encontraron productos disponibles
-        </div>
-      </div>
+    <Modal :show="showProductoModal" @close="closeProductoModal" title="Agregar Producto" size="large">
+      <ProductoAutocomplete 
+        v-model="selectedTempProducto"
+        @select="onProductoSelected"
+      />
 
       <div v-if="selectedTempProducto" class="producto-form">
         <h4>{{ selectedTempProducto.nombre }}</h4>
@@ -199,9 +171,9 @@
               type="number" 
               class="form-control" 
               min="1"
-              :max="selectedTempProducto.stockActual"
+              :max="selectedTempProducto.stock"
             />
-            <small class="form-text">Disponible: {{ selectedTempProducto.stockActual }}</small>
+            <small class="form-text">Disponible: {{ selectedTempProducto.stock }}</small>
           </div>
           <div class="form-group">
             <label>Descuento (%)</label>
@@ -216,7 +188,7 @@
           </div>
         </div>
         <div class="form-summary">
-          <p><strong>Precio Unitario:</strong> {{ formatCurrency(selectedTempProducto.precioVenta) }}</p>
+          <p><strong>Precio Unitario:</strong> {{ formatCurrency(selectedTempProducto.precio) }}</p>
           <p><strong>Subtotal:</strong> {{ formatCurrency(calcularSubtotalTemp()) }}</p>
         </div>
         <button @click="agregarProductoAlCarrito" class="btn btn-primary btn-block">
@@ -244,6 +216,7 @@ import { formatCurrency, calculateIVA } from '@/utils/helpers'
 import Modal from '@/components/Modal.vue'
 import SearchBox from '@/components/SearchBox.vue'
 import ClienteAutocomplete from '@/components/ClienteAutocomplete.vue'
+import ProductoAutocomplete from '@/components/ProductoAutocomplete.vue'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
@@ -255,7 +228,6 @@ const showClienteModal = ref(false)
 
 // Producto selection
 const showProductoModal = ref(false)
-const productoSearchTerm = ref('')
 const selectedTempProducto = ref(null)
 const tempCantidad = ref(1)
 const tempDescuento = ref(0)
@@ -266,19 +238,6 @@ const observaciones = ref('')
 const saving = ref(false)
 
 // Computed
-const productosDisponibles = computed(() => productoStore.productosDisponibles)
-
-const filteredProductos = computed(() => {
-  if (!productoSearchTerm.value) return productosDisponibles.value.filter(p => p.stockActual > 0)
-  const term = productoSearchTerm.value.toLowerCase()
-  return productosDisponibles.value.filter(p => 
-    p.stockActual > 0 && (
-      p.nombre.toLowerCase().includes(term) ||
-      p.codigoBarra.toLowerCase().includes(term)
-    )
-  )
-})
-
 const subtotal = computed(() => {
   return detalles.value.reduce((sum, detalle) => sum + calculateDetalleTotal(detalle), 0)
 })
@@ -295,8 +254,16 @@ const clearCliente = () => {
   selectedCliente.value = null
 }
 
-const selectProducto = (producto) => {
-  if (producto.stockActual === 0 || isProductoInCart(producto.id)) return
+const onProductoSelected = (producto) => {
+  if (isProductoInCart(producto.id)) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Producto ya agregado',
+      text: 'Este producto ya está en el carrito'
+    })
+    return
+  }
+  
   selectedTempProducto.value = producto
   tempCantidad.value = 1
   tempDescuento.value = 0
@@ -305,7 +272,6 @@ const selectProducto = (producto) => {
 const closeProductoModal = () => {
   showProductoModal.value = false
   selectedTempProducto.value = null
-  productoSearchTerm.value = ''
   tempCantidad.value = 1
   tempDescuento.value = 0
 }
@@ -340,7 +306,8 @@ const validateCantidad = (detalle, index) => {
 
 const calcularSubtotalTemp = () => {
   if (!selectedTempProducto.value) return 0
-  const subtotalItem = selectedTempProducto.value.precioVenta * tempCantidad.value
+  const precioVenta = selectedTempProducto.value.precio || selectedTempProducto.value.precioVenta
+  const subtotalItem = precioVenta * tempCantidad.value
   const descuentoAmount = (subtotalItem * tempDescuento.value) / 100
   return subtotalItem - descuentoAmount
 }
@@ -348,20 +315,24 @@ const calcularSubtotalTemp = () => {
 const agregarProductoAlCarrito = () => {
   if (!selectedTempProducto.value || tempCantidad.value <= 0) return
 
-  if (tempCantidad.value > selectedTempProducto.value.stockActual) {
+  const stockDisponible = selectedTempProducto.value.stock || selectedTempProducto.value.stockActual
+
+  if (tempCantidad.value > stockDisponible) {
     Swal.fire({
       icon: 'error',
       title: 'Stock Insuficiente',
-      text: `Solo hay ${selectedTempProducto.value.stockActual} unidades disponibles`
+      text: `Solo hay ${stockDisponible} unidades disponibles`
     })
     return
   }
+
+  const precioVenta = selectedTempProducto.value.precio || selectedTempProducto.value.precioVenta
 
   detalles.value.push({
     productoId: selectedTempProducto.value.id,
     productoNombre: selectedTempProducto.value.nombre,
     cantidad: tempCantidad.value,
-    precioUnitario: selectedTempProducto.value.precioVenta,
+    precioUnitario: precioVenta,
     descuento: tempDescuento.value
   })
 
