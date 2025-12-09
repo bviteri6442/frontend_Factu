@@ -10,6 +10,7 @@ import Productos from '@/views/Productos.vue'
 import Ventas from '@/views/Ventas.vue'
 import NuevaVenta from '@/views/NuevaVenta.vue'
 import Usuarios from '@/views/Usuarios.vue'
+import Logs from '@/views/Logs.vue'
 import ErrorLogs from '@/views/ErrorLogs.vue'
 import EliminacionesUsuarios from '@/views/EliminacionesUsuarios.vue'
 import EliminacionesProductos from '@/views/EliminacionesProductos.vue'
@@ -64,6 +65,15 @@ const routes = [
         path: 'usuarios',
         name: 'Usuarios',
         component: Usuarios,
+        meta: { 
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'logs',
+        name: 'Logs',
+        component: Logs,
         meta: { 
           requiresAuth: true,
           requiresAdmin: true

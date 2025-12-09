@@ -1,6 +1,6 @@
 
 // Cambiar esta variable para seleccionar la base de datos
-const DATABASE = 'sqlite' // Opciones: 'postgresql' o 'sqlite'
+const DATABASE = 'postgresql' // Opciones: 'postgresql' o 'sqlite'
 
 const BACKENDS = {
   postgresql: 'https://localhost:56397/api',
@@ -40,9 +40,21 @@ export const API_ENDPOINTS = {
   // Roles
   ROLES: '/roles',
   
-  // Error Logs
+  // Logs (Auditoría)
+  LOGS_INTENTOS_LOGIN: '/logs/intentos-login',
+  LOGS_INTENTOS_LOGIN_STATS: '/logs/intentos-login/estadisticas',
+  LOGS_INTENTOS_LOGIN_PDF: '/logs/intentos-login/pdf',
+  LOGS_ERRORES: '/logs/errores',
+  LOGS_ERRORES_STATS: '/logs/errores/estadisticas',
+  LOGS_ERRORES_PDF: '/logs/errores/pdf',
+  LOGS_ERROR_REVISAR: (id) => `/logs/errores/${id}/revisar`,
+  
+  // Error Logs (Deprecated - usar LOGS_ERRORES)
   ERROR_LOGS: '/errorlogs',
   
   // Eliminaciones de Usuarios
-  ELIMINACIONES_USUARIOS: '/eliminacionesusuarios'
+  ELIMINACIONES_USUARIOS: '/eliminacionesusuarios',
+  
+  // Eliminaciones de Productos
+  ELIMINACIONES_PRODUCTOS: '/eliminacionesproductos'
 }

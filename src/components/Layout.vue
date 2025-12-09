@@ -41,14 +41,19 @@
             <span>Usuarios</span>
           </router-link>
           
+          <router-link v-if="isAdmin" to="/eliminaciones-usuarios" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span>Elim. Usuarios</span>
+          </router-link>
+          
           <router-link v-if="isAdmin" to="/eliminaciones-productos" class="nav-item">
             <span class="nav-icon">📦</span>
             <span>Elim. Productos</span>
           </router-link>
           
-          <router-link v-if="isAdmin" to="/error-logs" class="nav-item">
-            <span class="nav-icon">⚠️</span>
-            <span>Registro de Errores</span>
+          <router-link v-if="isAdmin" to="/logs" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span>Logs</span>
           </router-link>
         </nav>
       </aside>

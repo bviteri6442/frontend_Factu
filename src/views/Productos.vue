@@ -37,10 +37,10 @@
             <tr>
               <th>Código</th>
               <th>Nombre</th>
-              <th>Precio Costo</th>
-              <th>Precio Venta</th>
-              <th>Stock Actual</th>
-              <th>Stock Mínimo</th>
+              <th class="text-right">Precio Costo</th>
+              <th class="text-right">Precio Venta</th>
+              <th class="text-right">Stock Actual</th>
+              <th class="text-right">Stock Mínimo</th>
               <th>Estado</th>
               <th v-if="isAdmin">Acciones</th>
             </tr>
@@ -62,14 +62,14 @@
                 <br />
                 <small v-if="producto.descripcion">{{ producto.descripcion }}</small>
               </td>
-              <td>{{ formatCurrency(producto.precioCosto) }}</td>
-              <td>{{ formatCurrency(producto.precioVenta) }}</td>
-              <td>
+              <td class="text-right">{{ formatCurrency(producto.precioCosto) }}</td>
+              <td class="text-right">{{ formatCurrency(producto.precioVenta) }}</td>
+              <td class="text-right">
                 <span :class="getStockClass(producto)">
                   {{ producto.stockActual }}
                 </span>
               </td>
-              <td>{{ producto.stockMinimo }}</td>
+              <td class="text-right">{{ producto.stockMinimo }}</td>
               <td>
                 <span :class="['badge', producto.activo ? 'badge-success' : 'badge-danger']">
                   {{ producto.activo ? 'Activo' : 'Inactivo' }}
@@ -129,6 +129,7 @@
     <Modal 
       :show="showModal" 
       :title="editMode ? 'Editar Producto' : 'Nuevo Producto'"
+      :showFooter="false"
       @close="closeModal"
     >
       <form @submit.prevent="saveProducto">
@@ -505,6 +506,10 @@ onMounted(async () => {
 
 .low-stock {
   background-color: #fff3cd;
+}
+
+.text-right {
+  text-align: right !important;
 }
 
 @media (max-width: 768px) {

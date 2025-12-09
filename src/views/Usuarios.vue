@@ -113,6 +113,7 @@
     <Modal 
       :show="showModal" 
       :title="editMode ? 'Editar Usuario' : 'Nuevo Usuario'"
+      :showFooter="false"
       @close="closeModal"
     >
       <form @submit.prevent="saveUsuario">

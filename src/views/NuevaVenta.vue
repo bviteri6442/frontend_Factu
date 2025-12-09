@@ -11,23 +11,31 @@
     <div class="card">
       <div class="card-header">
         <h3 class="card-title">Cliente</h3>
+        <button @click="showClienteModal = true" class="btn btn-primary">
+          Agregar Cliente
+        </button>
       </div>
       <div class="card-body">
-        <div class="selected-client-box" @click="showClienteModal = true">
-          <div v-if="!selectedCliente" class="placeholder-text">
-            <span>Click para seleccionar cliente (Opcional - Consumidor Final por defecto)</span>
-          </div>
-          <div v-else class="selected-info">
-            <div class="info-row">
-              <strong>{{ selectedCliente.nombre }}</strong>
-              <button @click.stop="clearCliente" class="btn-clear">×</button>
+        <div v-if="!selectedCliente" class="empty-client-state">
+          <span class="empty-icon">👤</span>
+          <p>No se ha seleccionado cliente</p>
+          <small>Click en "Agregar Cliente" o se usará Consumidor Final por defecto</small>
+        </div>
+        <div v-else class="selected-client-card">
+          <div class="client-info">
+            <div class="client-header">
+              <h4>{{ selectedCliente.nombre }}</h4>
+              <button @click="clearCliente" class="btn btn-sm btn-danger" title="Quitar cliente">
+                ✕
+              </button>
             </div>
-            <div class="info-details">
-              <span>{{ selectedCliente.documento }}</span>
-              <span v-if="selectedCliente.telefono">• {{ selectedCliente.telefono }}</span>
+            <div class="client-details">
+              <span><strong>Documento:</strong> {{ selectedCliente.documento }}</span>
+              <span v-if="selectedCliente.telefono"><strong>Teléfono:</strong> {{ selectedCliente.telefono }}</span>
+              <span v-if="selectedCliente.email"><strong>Email:</strong> {{ selectedCliente.email }}</span>
             </div>
-            <div v-if="selectedCliente.direccion" class="info-address">
-              {{ selectedCliente.direccion }}
+            <div v-if="selectedCliente.direccion" class="client-address">
+              <strong>Dirección:</strong> {{ selectedCliente.direccion }}
             </div>
           </div>
         </div>
@@ -53,10 +61,10 @@
             <thead>
               <tr>
                 <th>Producto</th>
-                <th style="width: 120px;">Cantidad</th>
-                <th style="width: 140px;">Precio Unit.</th>
-                <th style="width: 120px;">Descuento (%)</th>
-                <th style="width: 140px;">Subtotal</th>
+                <th class="text-right" style="width: 120px;">Cantidad</th>
+                <th class="text-right" style="width: 140px;">Precio Unit.</th>
+                <th class="text-right" style="width: 120px;">Descuento (%)</th>
+                <th class="text-right" style="width: 140px;">Subtotal</th>
                 <th style="width: 100px;">Acciones</th>
               </tr>
             </thead>
@@ -75,18 +83,18 @@
                     @input="validateCantidad(detalle, index)"
                   />
                 </td>
-                <td>{{ formatCurrency(detalle.precioUnitario) }}</td>
+                <td class="text-right">{{ formatCurrency(detalle.precioUnitario) }}</td>
                 <td>
                   <input 
                     v-model.number="detalle.descuento" 
                     type="number" 
-                    class="form-control form-control-sm" 
+                    class="form-control form-control-sm text-right" 
                     min="0"
                     max="100"
                     step="0.1"
                   />
                 </td>
-                <td><strong>{{ formatCurrency(calculateDetalleTotal(detalle)) }}</strong></td>
+                <td class="text-right"><strong>{{ formatCurrency(calculateDetalleTotal(detalle)) }}</strong></td>
                 <td>
                   <button 
                     @click="removeProducto(index)" 
@@ -145,36 +153,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Modal Cliente -->
-    <Modal :show="showClienteModal" @close="showClienteModal = false" title="Seleccionar Cliente">
-      <div class="modal-search">
-        <SearchBox 
-          v-model="clienteSearchTerm" 
-          placeholder="Buscar por nombre o documento..."
-        />
-      </div>
-      <div class="modal-list">
-        <div 
-          v-for="cliente in filteredClientes" 
-          :key="cliente.id"
-          class="list-item"
-          @click="selectCliente(cliente)"
-        >
-          <div class="item-header">
-            <strong>{{ cliente.nombre }}</strong>
-            <span class="badge badge-info">{{ cliente.documento }}</span>
-          </div>
-          <div class="item-details">
-            <span v-if="cliente.telefono">Teléfono: {{ cliente.telefono }}</span>
-            <span v-if="cliente.email">Email: {{ cliente.email }}</span>
-          </div>
-        </div>
-        <div v-if="filteredClientes.length === 0" class="empty-message">
-          No se encontraron clientes
-        </div>
-      </div>
-    </Modal>
 
     <!-- Modal Producto -->
     <Modal :show="showProductoModal" @close="closeProductoModal" title="Agregar Producto">
@@ -246,28 +224,34 @@
         </button>
       </div>
     </Modal>
+
+    <!-- Modal Cliente -->
+    <Modal :show="showClienteModal" @close="showClienteModal = false" title="Seleccionar Cliente" size="large">
+      <ClienteAutocomplete 
+        v-model="selectedCliente"
+        @select="onClienteSelected"
+      />
+    </Modal>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useClienteStore } from '@/stores/clienteStore'
 import { useProductoStore } from '@/stores/productoStore'
 import { ventaService } from '@/services/ventaService'
 import { formatCurrency, calculateIVA } from '@/utils/helpers'
 import Modal from '@/components/Modal.vue'
 import SearchBox from '@/components/SearchBox.vue'
+import ClienteAutocomplete from '@/components/ClienteAutocomplete.vue'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
-const clienteStore = useClienteStore()
 const productoStore = useProductoStore()
 
 // Cliente selection
 const selectedCliente = ref(null)
 const showClienteModal = ref(false)
-const clienteSearchTerm = ref('')
 
 // Producto selection
 const showProductoModal = ref(false)
@@ -282,17 +266,7 @@ const observaciones = ref('')
 const saving = ref(false)
 
 // Computed
-const clientesActivos = computed(() => clienteStore.clientesActivos)
 const productosDisponibles = computed(() => productoStore.productosDisponibles)
-
-const filteredClientes = computed(() => {
-  if (!clienteSearchTerm.value) return clientesActivos.value
-  const term = clienteSearchTerm.value.toLowerCase()
-  return clientesActivos.value.filter(c => 
-    c.nombre.toLowerCase().includes(term) ||
-    c.documento.toLowerCase().includes(term)
-  )
-})
 
 const filteredProductos = computed(() => {
   if (!productoSearchTerm.value) return productosDisponibles.value.filter(p => p.stockActual > 0)
@@ -313,10 +287,8 @@ const totalIVA = computed(() => calculateIVA(subtotal.value, 12))
 const total = computed(() => subtotal.value + totalIVA.value)
 
 // Methods
-const selectCliente = (cliente) => {
-  selectedCliente.value = cliente
+const onClienteSelected = (cliente) => {
   showClienteModal.value = false
-  clienteSearchTerm.value = ''
 }
 
 const clearCliente = () => {
@@ -499,15 +471,13 @@ const cancelVenta = async () => {
 
 onMounted(async () => {
   try {
-    await Promise.all([
-      clienteStore.fetchClientes(),
-      productoStore.fetchProductos()
-    ])
+    // Solo cargamos los productos, los clientes se buscan bajo demanda
+    await productoStore.fetchProductos()
   } catch (error) {
     Swal.fire({
       icon: 'error',
       title: 'Error',
-      text: 'No se pudieron cargar los datos necesarios'
+      text: 'No se pudieron cargar los productos'
     })
   }
 })
@@ -531,71 +501,77 @@ onMounted(async () => {
   margin: 0;
 }
 
-.selected-client-box {
-  padding: 20px;
-  border: 2px dashed #dee2e6;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-height: 100px;
+/* Cliente Card Styles */
+.empty-client-state {
   display: flex;
+  flex-direction: column;
   align-items: center;
-}
-
-.selected-client-box:hover {
-  border-color: var(--primary-color);
-  background-color: rgba(255, 119, 19, 0.05);
-}
-
-.placeholder-text {
-  color: #6c757d;
-  font-style: italic;
+  padding: 40px 20px;
   text-align: center;
+  color: #6c757d;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.empty-client-state p {
+  margin: 8px 0 4px 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.empty-client-state small {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.selected-client-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 20px;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.client-info {
   width: 100%;
 }
 
-.selected-info {
-  width: 100%;
-}
-
-.info-row {
+.client-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
-.info-row strong {
-  font-size: 18px;
-  color: var(--secondary-color);
+.client-header h4 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: white;
 }
 
-.btn-clear {
-  background: none;
-  border: none;
-  font-size: 32px;
-  color: #dc3545;
-  cursor: pointer;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  line-height: 1;
-}
-
-.btn-clear:hover {
-  color: #c82333;
-}
-
-.info-details {
+.client-details {
   display: flex;
-  gap: 15px;
-  color: #6c757d;
-  margin-bottom: 5px;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 8px;
+  font-size: 14px;
 }
 
-.info-address {
-  color: #6c757d;
+.client-details span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.client-address {
   font-size: 14px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .empty-state {

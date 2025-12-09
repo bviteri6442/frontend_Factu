@@ -37,9 +37,9 @@
               <th>Fecha</th>
               <th>Cliente</th>
               <th>Usuario</th>
-              <th>Subtotal</th>
-              <th>IVA</th>
-              <th>Total</th>
+              <th class="text-right">Subtotal</th>
+              <th class="text-right">IVA</th>
+              <th class="text-right">Total</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -55,9 +55,9 @@
               <td>{{ formatDateTime(venta.fechaVenta) }}</td>
               <td>{{ venta.clienteNombre || 'Consumidor Final' }}</td>
               <td>{{ venta.usuarioNombre }}</td>
-              <td>{{ formatCurrency(venta.subtotal) }}</td>
-              <td>{{ formatCurrency(venta.totalImpuesto) }}</td>
-              <td><strong>{{ formatCurrency(venta.totalVenta) }}</strong></td>
+              <td class="text-right">{{ formatCurrency(venta.subtotal) }}</td>
+              <td class="text-right">{{ formatCurrency(venta.totalImpuesto) }}</td>
+              <td class="text-right"><strong>{{ formatCurrency(venta.totalVenta) }}</strong></td>
               <td>
                 <span :class="['badge', getEstadoClass(venta.estado)]">
                   {{ venta.estado }}
@@ -133,19 +133,19 @@
           <thead>
             <tr>
               <th>Producto</th>
-              <th>Cantidad</th>
-              <th>Precio Unit.</th>
-              <th>Descuento</th>
-              <th>Total</th>
+              <th class="text-right">Cantidad</th>
+              <th class="text-right">Precio Unit.</th>
+              <th class="text-right">Descuento</th>
+              <th class="text-right">Total</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="detalle in selectedVenta.detalles" :key="detalle.productoId">
               <td>{{ detalle.productoNombre }}</td>
-              <td>{{ detalle.cantidad }}</td>
-              <td>{{ formatCurrency(detalle.precioUnitario) }}</td>
-              <td>{{ detalle.descuento }}%</td>
-              <td>{{ formatCurrency(detalle.total) }}</td>
+              <td class="text-right">{{ detalle.cantidad }}</td>
+              <td class="text-right">{{ formatCurrency(detalle.precioUnitario) }}</td>
+              <td class="text-right">{{ detalle.descuento }}%</td>
+              <td class="text-right">{{ formatCurrency(detalle.total) }}</td>
             </tr>
           </tbody>
         </table>

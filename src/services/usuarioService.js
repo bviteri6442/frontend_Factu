@@ -37,11 +37,17 @@ export const usuarioService = {
   },
   
   async create(usuarioData) {
-    // Mapear campos del frontend al backend
+    // Mapear campos del frontend al backend (enviar en ambos formatos para compatibilidad)
     const payload = {
+      // Formato backend
       nombreUsuario: usuarioData.cedula,
       nombre: usuarioData.nombreCompleto,
       email: usuarioData.correo,
+      // Formato frontend (aliases)
+      cedula: usuarioData.cedula,
+      nombreCompleto: usuarioData.nombreCompleto,
+      correo: usuarioData.correo,
+      // Campos requeridos
       contrasena: usuarioData.contrasena,
       rolId: parseInt(usuarioData.rolId)
     }

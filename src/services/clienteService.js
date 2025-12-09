@@ -27,8 +27,10 @@ export const clienteService = {
     return response.data
   },
   
-  async search(searchTerm) {
-    const response = await apiClient.get(`${API_ENDPOINTS.CLIENTES}?search=${searchTerm}`)
+  async search(term, limit = 20) {
+    const response = await apiClient.get(`${API_ENDPOINTS.CLIENTES}/search`, {
+      params: { term, limit }
+    })
     return response.data
   }
 }

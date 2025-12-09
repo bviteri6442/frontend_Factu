@@ -4,7 +4,20 @@ import { API_ENDPOINTS } from '@/config/api'
 export const productoService = {
   async getAll() {
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTOS)
-    return response.data
+    // Mapear los datos del backend al formato del frontend
+    return response.data.map(p => ({
+      id: p.id,
+      nombre: p.nombre,
+      codigoBarra: p.codigo,
+      descripcion: p.descripcion,
+      precioCosto: p.precioCompra,
+      precioVenta: p.precio,
+      stockActual: p.stock,
+      stockMinimo: p.stockMinimo,
+      activo: p.activo,
+      fechaCreacion: p.fechaCreacion,
+      fechaActualizacion: p.fechaActualizacion
+    }))
   },
   
   async getById(id) {
@@ -17,9 +30,11 @@ export const productoService = {
     const payload = {
       nombre: productoData.nombre,
       codigo: productoData.codigoBarra,
+      descripcion: productoData.descripcion || '',
       precio: productoData.precioVenta,
       precioCompra: productoData.precioCosto || 0,
-      stockInicial: productoData.stockActual || 0
+      stockInicial: productoData.stockActual || 0,
+      stockMinimo: productoData.stockMinimo || 10
     }
     const response = await apiClient.post(API_ENDPOINTS.PRODUCTOS, payload)
     return response.data
@@ -30,7 +45,11 @@ export const productoService = {
     const payload = {
       id: id,
       nombre: productoData.nombre,
-      precioVenta: productoData.precioVenta
+      descripcion: productoData.descripcion,
+      precioVenta: productoData.precioVenta,
+      precioCompra: productoData.precioCosto,
+      stock: productoData.stockActual,
+      stockMinimo: productoData.stockMinimo
     }
     const response = await apiClient.put(API_ENDPOINTS.PRODUCTOS_BY_ID(id), payload)
     return response.data
