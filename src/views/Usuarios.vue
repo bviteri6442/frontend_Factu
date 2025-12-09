@@ -124,6 +124,7 @@
             type="text"
             class="form-control"
             :class="{ 'is-invalid': formErrors.cedula }"
+            placeholder="Ej: 1234567890 (exactamente 10 dígitos)"
             @keypress="onlyNumbers"
             :disabled="editMode"
             maxlength="10"
@@ -139,6 +140,7 @@
             type="text"
             class="form-control"
             :class="{ 'is-invalid': formErrors.nombreCompleto }"
+            placeholder="Ej: María Elena Torres Vásquez"
             @keypress="onlyLetters"
             required
           />
@@ -152,6 +154,7 @@
             type="email"
             class="form-control"
             :class="{ 'is-invalid': formErrors.correo }"
+            placeholder="Ej: maria.torres@empresa.com"
             required
           />
           <span v-if="formErrors.correo" class="form-error">{{ formErrors.correo }}</span>
@@ -164,6 +167,7 @@
             type="password"
             class="form-control"
             :class="{ 'is-invalid': formErrors.contrasena }"
+            placeholder="Ej: Admin123! (4-10 caracteres)"
             required
           />
           <small class="form-text">

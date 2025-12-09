@@ -30,7 +30,9 @@ export const API_ENDPOINTS = {
   // Ventas
   VENTAS: '/ventas',
   VENTAS_BY_ID: (id) => `/ventas/${id}`,
+  VENTAS_BY_NUMERO: (numeroFactura) => `/ventas/numero/${numeroFactura}`,
   VENTAS_PDF: (id) => `/ventas/${id}/pdf`,
+  VENTAS_PDF_BY_NUMERO: (numeroFactura) => `/ventas/numero/${numeroFactura}/pdf`,
   
   // Usuarios
   USUARIOS: '/usuarios',

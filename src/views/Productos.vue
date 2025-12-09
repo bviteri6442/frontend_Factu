@@ -142,6 +142,7 @@
                 type="text"
                 class="form-control"
                 :class="{ 'is-invalid': formErrors.nombre }"
+                placeholder="Ej: Laptop HP Pavilion 15"
                 required
               />
               <span v-if="formErrors.nombre" class="form-error">{{ formErrors.nombre }}</span>
@@ -156,6 +157,7 @@
                 type="text"
                 class="form-control"
                 :class="{ 'is-invalid': formErrors.codigoBarra }"
+                placeholder="Ej: 7501234567890 o PROD-001"
                 :disabled="editMode"
                 required
               />
@@ -171,6 +173,7 @@
             class="form-control"
             rows="2"
             maxlength="500"
+            placeholder="Ej: Laptop con procesador Intel Core i5, 8GB RAM, 256GB SSD, pantalla 15.6 pulgadas"
           ></textarea>
         </div>
 
@@ -184,6 +187,7 @@
                 step="0.01"
                 class="form-control"
                 :class="{ 'is-invalid': formErrors.precioCosto }"
+                placeholder="Ej: 450.00"
                 required
               />
               <span v-if="formErrors.precioCosto" class="form-error">{{ formErrors.precioCosto }}</span>
@@ -199,6 +203,7 @@
                 step="0.01"
                 class="form-control"
                 :class="{ 'is-invalid': formErrors.precioVenta }"
+                placeholder="Ej: 650.00"
                 required
               />
               <span v-if="formErrors.precioVenta" class="form-error">{{ formErrors.precioVenta }}</span>
@@ -215,6 +220,7 @@
                 type="number"
                 class="form-control"
                 :class="{ 'is-invalid': formErrors.stockActual }"
+                placeholder="Ej: 50"
                 required
               />
               <span v-if="formErrors.stockActual" class="form-error">{{ formErrors.stockActual }}</span>
@@ -229,6 +235,7 @@
                 type="number"
                 class="form-control"
                 :class="{ 'is-invalid': formErrors.stockMinimo }"
+                placeholder="Ej: 10"
               />
               <span v-if="formErrors.stockMinimo" class="form-error">{{ formErrors.stockMinimo }}</span>
             </div>

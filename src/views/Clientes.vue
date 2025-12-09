@@ -115,6 +115,7 @@
             type="text"
             class="form-control"
             :class="{ 'is-invalid': formErrors.nombre }"
+            placeholder="Ej: Juan Carlos Pérez González"
             @keypress="onlyLetters"
             required
           />
@@ -128,6 +129,7 @@
             type="text"
             class="form-control"
             :class="{ 'is-invalid': formErrors.documento }"
+            placeholder="Ej: 1234567890 (Cédula 10 dígitos) o 1234567890001 (RUC 13 dígitos)"
             @keypress="onlyNumbers"
             :disabled="editMode"
             maxlength="20"
@@ -143,6 +145,7 @@
             type="email"
             class="form-control"
             :class="{ 'is-invalid': formErrors.email }"
+            placeholder="Ej: cliente@ejemplo.com"
           />
           <span v-if="formErrors.email" class="form-error">{{ formErrors.email }}</span>
         </div>
@@ -154,6 +157,7 @@
             type="text"
             class="form-control"
             :class="{ 'is-invalid': formErrors.telefono }"
+            placeholder="Ej: 0987654321 (10 dígitos)"
             @keypress="onlyNumbers"
             maxlength="15"
           />
@@ -167,6 +171,7 @@
             class="form-control"
             rows="3"
             maxlength="300"
+            placeholder="Ej: Av. Principal #123 y Calle Secundaria, Edificio Torre Azul, Oficina 201"
           ></textarea>
         </div>
 

@@ -9,8 +9,9 @@ export const ventaService = {
     return response.data
   },
   
-  async getById(id) {
-    const response = await apiClient.get(API_ENDPOINTS.VENTAS_BY_ID(id))
+  async getById(numeroFactura) {
+    // Usar el endpoint que acepta número de factura
+    const response = await apiClient.get(API_ENDPOINTS.VENTAS_BY_NUMERO(numeroFactura))
     return response.data
   },
 
@@ -24,17 +25,18 @@ export const ventaService = {
     return response.data
   },
   
-  async generatePDF(ventaId) {
-    const response = await apiClient.get(API_ENDPOINTS.VENTAS_PDF(ventaId), {
+  async generatePDF(numeroFactura) {
+    // Usar el endpoint que acepta número de factura para PDF
+    const response = await apiClient.get(API_ENDPOINTS.VENTAS_PDF_BY_NUMERO(numeroFactura), {
       responseType: 'blob',
       timeout: 30000 // 30 segundos timeout
     })
     return response.data
   },
   
-  async downloadPDF(ventaId, numeroFactura) {
+  async downloadPDF(numeroFactura, nombreArchivo) {
     try {
-      const blob = await this.generatePDF(ventaId)
+      const blob = await this.generatePDF(numeroFactura)
       
       // Verificar que el blob es válido
       if (!blob || blob.size === 0) {
@@ -44,7 +46,7 @@ export const ventaService = {
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `Factura_${numeroFactura}.pdf`
+      link.download = `Factura_${nombreArchivo}.pdf`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)

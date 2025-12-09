@@ -64,22 +64,23 @@
                 </span>
               </td>
               <td>
-                <div class="action-buttons">
-                  <button 
-                    @click="viewVenta(venta.numeroFactura)" 
-                    class="btn btn-sm btn-primary"
-                    title="Ver Detalle"
-                  >
-                    Ver
-                  </button>
-                  <button 
-                    @click="downloadPDF(venta)" 
-                    class="btn btn-sm btn-success"
-                    title="Descargar PDF"
-                  >
-                    PDF
-                  </button>
-                </div>
+                <button 
+                  @click="viewVenta(venta.numeroFactura)" 
+                  class="btn btn-sm btn-primary"
+                  title="Ver Detalle"
+                  style="margin-right: 5px;"
+                >
+                  <i class="fas fa-eye"></i>
+                  Ver
+                </button>
+                <button 
+                  @click="downloadPDF(venta)" 
+                  class="btn btn-sm btn-success"
+                  title="Descargar PDF"
+                >
+                  <i class="fas fa-file-pdf"></i>
+                  PDF
+                </button>
               </td>
             </tr>
           </tbody>
@@ -162,8 +163,12 @@
         </div>
 
         <div class="modal-footer">
-          <button @click="showDetailModal = false" class="btn btn-secondary">Cerrar</button>
+          <button @click="showDetailModal = false" class="btn btn-secondary">
+            <i class="fas fa-times"></i>
+            Cerrar
+          </button>
           <button @click="downloadPDF(selectedVenta)" class="btn btn-success">
+            <i class="fas fa-file-pdf"></i>
             Descargar PDF
           </button>
         </div>
@@ -236,20 +241,10 @@ const getEstadoClass = (estado) => {
 const fetchVentas = async (filterParams = {}) => {
   loading.value = true
   try {
-    console.log('[DEBUG] Llamando a ventaService.getAll con params:', filterParams)
     const result = await ventaService.getAll(filterParams)
-    console.log('[DEBUG] Respuesta del backend:', result)
-    console.log('[DEBUG] Tipo de respuesta:', typeof result)
-    console.log('[DEBUG] Es array?:', Array.isArray(result))
-    
     ventas.value = result || []
-    console.log('[DEBUG] Facturas cargadas:', ventas.value.length)
   } catch (error) {
-    console.error('[DEBUG] Error completo:', error)
-    console.error('[DEBUG] Error response:', error.response)
-    console.error('[DEBUG] Error data:', error.response?.data)
-    console.error('[DEBUG] Error status:', error.response?.status)
-    
+    console.error('Error al cargar facturas:', error)
     ventas.value = []
     // Solo mostrar error si no es un error de lista vacía
     if (error.response?.status !== 404) {
@@ -282,35 +277,36 @@ const clearFilters = () => {
   fetchVentas()
 }
 
-const viewVenta = async (ventaId) => {
+const viewVenta = async (numeroFactura) => {
   try {
-    selectedVenta.value = await ventaService.getById(ventaId)
+    const data = await ventaService.getById(numeroFactura)
+    selectedVenta.value = data
     showDetailModal.value = true
   } catch (error) {
+    console.error('Error al ver factura:', error)
     Swal.fire({
       icon: 'error',
       title: 'Error',
-      text: 'No se pudo cargar el detalle de la factura'
+      text: error.response?.data?.message || 'No se pudo cargar el detalle de la factura'
     })
   }
 }
 
 const downloadPDF = async (venta) => {
-  const loadingSwal = Swal.fire({
-    title: 'Generando PDF...',
-    text: 'Por favor espera',
-    allowOutsideClick: false,
-    allowEscapeKey: true,
-    showConfirmButton: false,
-    didOpen: () => {
-      Swal.showLoading()
-    }
-  })
-  
   try {
+    Swal.fire({
+      title: 'Generando PDF...',
+      text: 'Por favor espera',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading()
+      }
+    })
+    
     await ventaService.downloadPDF(venta.numeroFactura, venta.numeroFactura)
     
-    Swal.close()
     Swal.fire({
       icon: 'success',
       title: 'PDF Descargado',
@@ -319,8 +315,8 @@ const downloadPDF = async (venta) => {
       showConfirmButton: false
     })
   } catch (error) {
-    Swal.close()
     console.error('Error al descargar PDF:', error)
+    
     Swal.fire({
       icon: 'error',
       title: 'Error al descargar PDF',
@@ -374,18 +370,6 @@ onMounted(() => {
 
 .filter-group .form-control {
   width: 150px;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 5px;
-  position: relative;
-  z-index: 1;
-}
-
-.action-buttons .btn {
-  pointer-events: auto;
-  cursor: pointer;
 }
 
 .venta-detail .detail-header {
